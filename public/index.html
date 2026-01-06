@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M-Pesa STK Push Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #555;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-container {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .status-container.show {
+      display: block;
+    }
+
+    .status-pending {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+    }
+
+    .status-success {
+      background: #d4edda;
+      border: 2px solid #28a745;
+    }
+
+    .status-failed {
+      background: #f8d7da;
+      border: 2px solid #dc3545;
+    }
+
+    .status-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .status-pending .status-title {
+      color: #856404;
+    }
+
+    .status-success .status-title {
+      color: #155724;
+    }
+
+    .status-failed .status-title {
+      color: #721c24;
+    }
+
+    .status-details {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .status-details div {
+      margin: 5px 0;
+    }
+
+    .receipt {
+      font-weight: 600;
+      color: #28a745;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      border: 2px solid #dc3545;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .info-box {
+      background: #e7f3ff;
+      border: 2px solid #2196f3;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #0c5460;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💳 M-Pesa Payment</h1>
+    <p class="subtitle">STK Push Integration Demo</p>
+
+    <!-- Info box explaining what will happen -->
+    <div class="info-box">
+      <strong>How it works:</strong>
+      Enter your phone number and amount, then click Pay. You'll receive an STK prompt on your phone to complete the payment.
+    </div>
+
+    <!-- Payment Form -->
+    <form id="paymentForm">
+      <div class="form-group">
+        <label for="phoneNumber">Phone Number</label>
+        <input 
+          type="tel" 
+          id="phoneNumber" 
+          placeholder="0712345678 or 254712345678"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="amount">Amount (KES)</label>
+        <input 
+          type="number" 
+          id="amount" 
+          placeholder="100"
+          min="1"
+          step="1"
+          required
+        >
+      </div>
+
+      <button type="submit" id="payButton">
+        Pay with M-Pesa
+      </button>
+    </form>
+
+    <!-- Error Message -->
+    <div id="errorMessage" class="error-message"></div>
+
+    <!-- Status Display -->
+    <div id="statusContainer" class="status-container">
+      <div class="status-title" id="statusTitle"></div>
+      <div class="status-details" id="statusDetails"></div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * FRONTEND JAVASCRIPT
+     * 
+     * This handles the user interaction flow:
+     * 1. Capture form submission
+     * 2. Call backend to initiate STK push
+     * 3. Poll backend to check transaction status
+     * 4. Display result to user
+     */
+
+    const form = document.getElementById('paymentForm');
+    const payButton = document.getElementById('payButton');
+    const statusContainer = document.getElementById('statusContainer');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusDetails = document.getElementById('statusDetails');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Track polling interval and checkout request ID
+    let pollInterval = null;
+    let currentCheckoutRequestId = null;
+
+    /**
+     * STEP 1: Handle form submission
+     * 
+     * When user clicks "Pay with M-Pesa":
+     * 1. Prevent default form submission
+     * 2. Get phone number and amount
+     * 3. Call backend API to initiate STK push
+     * 4. Start polling for status
+     */
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Get form values
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      const amount = document.getElementById('amount').value;
+
+      // Reset previous states
+      hideError();
+      hideStatus();
+      stopPolling();
+
+      // Validate input
+      if (!phoneNumber || !amount) {
+        showError('Please enter phone number and amount');
+        return;
+      }
+
+      if (amount < 1) {
+        showError('Amount must be at least 1 KES');
+        return;
+      }
+
+      // Disable button and show loading state
+      payButton.disabled = true;
+      payButton.innerHTML = '<span class="loader"></span> Sending STK Push...';
+
+      try {
+        // Call backend API to initiate STK push
+        const response = await fetch('http://localhost:3000/api/mpesa/stkpush', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phoneNumber,
+            amount,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to initiate payment');
+        }
+
+        // STK push was sent successfully
+        currentCheckoutRequestId = data.checkoutRequestId;
+
+        // Show pending status
+        showPendingStatus(phoneNumber, amount);
+
+        // Start polling for transaction status
+        startPolling(currentCheckoutRequestId);
+
+      } catch (error) {
+        console.error('Error:', error);
+        showError(error.message || 'Failed to initiate payment');
+        resetButton();
+      }
+    });
+
+    /**
+     * STEP 2: Poll for transaction status
+     * 
+     * After STK push is sent, we poll the backend every 3 seconds
+     * to check if M-Pesa has sent the callback with the result.
+     * 
+     * We keep polling until:
+     * - Transaction status changes to SUCCESS or FAILED
+     * - 2 minutes have passed (timeout)
+     */
+    function startPolling(checkoutRequestId) {
+      console.log('Starting status polling for:', checkoutRequestId);
+      
+      let pollCount = 0;
+      const maxPolls = 40; // Poll for max 2 minutes (40 * 3 seconds)
+
+      pollInterval = setInterval(async () => {
+        pollCount++;
+
+        try {
+          // Call backend to get transaction status
+          const response = await fetch(
+            `http://localhost:3000/api/mpesa/status/${checkoutRequestId}`
+          );
+
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error('Failed to check status');
+          }
+
+          const transaction = data.transaction;
+          console.log('Transaction status:', transaction.status);
+
+          // Check if transaction is complete
+          if (transaction.status === 'SUCCESS') {
+            // Payment successful!
+            stopPolling();
+            showSuccessStatus(transaction);
+            resetButton();
+          } else if (transaction.status === 'FAILED') {
+            // Payment failed
+            stopPolling();
+            showFailedStatus(transaction);
+            resetButton();
+          } else if (pollCount >= maxPolls) {
+            // Timeout - stop polling
+            stopPolling();
+            showError('Payment verification timeout. Please check your M-Pesa messages.');
+            resetButton();
+          }
+          // If status is still PENDING, continue polling
+
+        } catch (error) {
+          console.error('Polling error:', error);
+          stopPolling();
+          showError('Failed to check payment status');
+          resetButton();
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    }
+
+    /**
+     * UI HELPER FUNCTIONS
+     * 
+     * These functions update the UI to show different states:
+     * - Pending (waiting for user to complete payment)
+     * - Success (payment completed)
+     * - Failed (payment failed/cancelled)
+     * - Error (technical error)
+     */
+
+    function showPendingStatus(phoneNumber, amount) {
+      statusContainer.className = 'status-container status-pending show';
+      statusTitle.innerHTML = '<span class="loader"></span> Waiting for Payment...';
+      statusDetails.innerHTML = `
+        <div>Check your phone (${phoneNumber}) for M-Pesa prompt</div>
+        <div>Amount: KES ${amount}</div>
+        <div>Enter your M-Pesa PIN to complete payment</div>
+      `;
+    }
+
+    function showSuccessStatus(transaction) {
+      statusContainer.className = 'status-container status-success show';
+      statusTitle.textContent = '✓ Payment Successful!';
+      statusDetails.innerHTML = `
+        <div>Amount: KES ${transaction.amount}</div>
+        <div>Phone: ${transaction.phone_number}</div>
+        <div class="receipt">Receipt: ${transaction.mpesa_receipt_number}</div>
+        <div>Date: ${new Date(transaction.transaction_date).toLocaleString()}</div>
+      `;
+    }
+
+    function showFailedStatus(transaction) {
+      statusContainer.className = 'status-container status-failed show';
+      statusTitle.textContent = '✗ Payment Failed';
+      statusDetails.innerHTML = `
+        <div>Reason: ${transaction.failure_reason || transaction.result_desc}</div>
+        <div>Please try again</div>
+      `;
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.add('show');
+    }
+
+    function hideError() {
+      errorMessage.classList.remove('show');
+    }
+
+    function hideStatus() {
+      statusContainer.classList.remove('show');
+    }
+
+    function resetButton() {
+      payButton.disabled = false;
+      payButton.textContent = 'Pay with M-Pesa';
+    }
+
+    /**
+     * SUMMARY OF THE COMPLETE FLOW:
+     * 
+     * 1. USER ACTION:
+     *    - User enters phone number and amount
+     *    - Clicks "Pay with M-Pesa"
+     * 
+     * 2. FRONTEND → BACKEND:
+     *    - Frontend calls POST /api/mpesa/stkpush
+     *    - Sends: { phoneNumber, amount }
+     * 
+     * 3. BACKEND → M-PESA:
+     *    - Backend gets access token
+     *    - Backend initiates STK push
+     *    - M-Pesa returns CheckoutRequestID
+     * 
+     * 4. BACKEND → DATABASE:
+     *    - Backend saves transaction with PENDING status
+     * 
+     * 5. BACKEND → FRONTEND:
+     *    - Backend returns CheckoutRequestID
+     * 
+     * 6. M-PESA → USER'S PHONE:
+     *    - STK prompt appears on user's phone
+     * 
+     * 7. USER → M-PESA:
+     *    - User enters M-Pesa PIN (or cancels)
+     * 
+     * 8. M-PESA → BACKEND:
+     *    - M-Pesa calls POST /api/mpesa/callback
+     *    - Sends transaction result
+     * 
+     * 9. BACKEND → DATABASE:
+     *    - Backend updates transaction status
+     * 
+     * 10. FRONTEND POLLING:
+     *     - Frontend polls GET /api/mpesa/status/:id
+     *     - Every 3 seconds until status changes
+     * 
+     * 11. DISPLAY RESULT:
+     *     - Show SUCCESS with receipt number
+     *     - Or show FAILED with reason
+     */
+  </script>
+</body>
+</html>
