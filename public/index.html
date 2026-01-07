@@ -308,7 +308,7 @@
 
       try {
         // Call backend API to initiate STK push
-        const response = await fetch('http://localhost:3000/api/mpesa/stkpush', {
+        const response = await fetch('/api/mpesa/stkpush', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -363,7 +363,7 @@
         try {
           // Call backend to get transaction status
           const response = await fetch(
-            `http://localhost:3000/api/mpesa/status/${checkoutRequestId}`
+            `/api/mpesa/status/${checkoutRequestId}`
           );
 
           const data = await response.json();
